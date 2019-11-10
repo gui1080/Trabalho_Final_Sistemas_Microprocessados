@@ -2,7 +2,7 @@
 
 
 /*
- * Ligações com o sensor RGB
+ * LigaÃ§Ãµes com o sensor RGB
  *
  * Sentido: MSP430 FR2355 -> RGB
  *
@@ -11,7 +11,7 @@
  * P6.1 -> GREEN (direita de 5V)
  * P6.0 -> RED (esquerda de 5V)
  *
- * resistores de 1k ohm antes das entradas
+ * resistores de 1k ohm antes das entradas (devia ser 330ohms na moral...)
  *
  */
 
