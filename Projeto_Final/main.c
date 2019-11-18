@@ -74,7 +74,8 @@ void main(void)
     // setar desliga o led
 
     // ideia: potencialmente usar 2 clocks, fazendo o do sensor de proximidade ser executado a cada 1 segundo e os outros sendo executados muito mais rapidamente
-
+    // um clock maior para o potenciometro deixa um baita delay chato nas mudanças de cor
+    
     while(1)
     {
 
