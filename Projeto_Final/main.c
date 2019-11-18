@@ -121,6 +121,7 @@ void main(void)
           P6OUT |= (BIT1);
           P6OUT |= (BIT2);
           ligado_potenciometro = 0;
+            // ideia: para travar o programa, aqui entraria um while eterno que só acaba quando a media_A0 muda
         }
         // -------------- botar numa função------------------------------------------------------------
 
