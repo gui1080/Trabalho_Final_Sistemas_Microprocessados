@@ -2,16 +2,28 @@
 
 
 /*
- * LigaÁıes com o sensor RGB
+ * Liga√ß√µes com o sensor RGB
  *
  * Sentido: MSP430 FR2355 -> RGB
  *
- * 5 volts -> perna maior
- * P6.2 -> BLUE (direita de GREEN)
- * P6.1 -> GREEN (direita de 5V)
- * P6.0 -> RED (esquerda de 5V)
+ * 5 volts -> 330ohms -> perna maior
+ * P6.2 -> 330ohms -> BLUE (direita de GREEN)
+ * P6.1 -> 330ohms -> GREEN (direita de 5V)
+ * P6.0 -> 330ohms -> RED (esquerda de 5V)
  *
- * resistores de 1k ohm antes das entradas (devia ser 330ohms na moral...)
+ * 
+ * -Potenciometro (de frente)
+ *
+ * esquerda -> GND
+ * meio -> P1.0
+ * direita -> 3.3v 
+ *
+ * -LDR (5mm)
+ *
+ * GND -> perna direita
+ * 5V -> 10k ohm -> perna esquerda -> output em P1.1
+ *
+ * HC-SR04
  *
  */
 
@@ -42,8 +54,8 @@ void main(void)
     TB0CTL = (TBSSEL__ACLK | MC__UP |  TBCLR);   // Clock
 
     TB0CCR0 = 0x0800;     // se 0x8000 conta 1 segundo, pegamos 1/16 disso para termos 16 amostras em 1 segundo
-                            // precisamos disso para um precis„o satisfatÛria
-    TBCCTL0 = CCIE; // permite vermos a interrupÁ„o (local)
+                            // precisamos disso para um precis√£o satisfat√≥ria
+    TBCCTL0 = CCIE; // permite vermos a interrup√ß√£o (local)
 
     __enable_interrupt();           // habilitamos a interrupcao do pragma vector
 
@@ -66,13 +78,13 @@ void main(void)
     {
 
         // TESTE
-        // -------------- botar numa funÁ„o--------(param: media_A0 e estado da luz)----------------------------------------------------
+        // -------------- botar numa fun√ß√£o--------(param: media_A0 e estado da luz)----------------------------------------------------
         // a funcao vai receber o valor das amostras do potenciometro
-        // se o potenciometro marca que ta desligado, n„o amostra o sensor de proximidade, e ignora o sensor de luz
-        // executa sÛ qnd um sensor fala que a luz esta ligada, se ta desligada executa:
+        // se o potenciometro marca que ta desligado, n√£o amostra o sensor de proximidade, e ignora o sensor de luz
+        // executa s√≥ qnd um sensor fala que a luz esta ligada, se ta desligada executa:
 
         /* if(estado_da_luz == 0){
-         *     apaga os pinos e d· break
+         *     apaga os pinos e d√° break
          * }
          *
          *
@@ -110,7 +122,7 @@ void main(void)
           P6OUT |= (BIT2);
           ligado_potenciometro = 0;
         }
-        // -------------- botar numa funÁ„o------------------------------------------------------------
+        // -------------- botar numa fun√ß√£o------------------------------------------------------------
 
 
     }
