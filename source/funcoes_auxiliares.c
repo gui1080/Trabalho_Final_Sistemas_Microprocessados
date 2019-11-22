@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 
-float valor_normalizado_vetor(uint16_t vector[8]) {
+float valor_normalizado_vetor_potenciometro(uint16_t vector[8]) {
 
     float media = 0;
     int k;
@@ -16,7 +16,40 @@ float valor_normalizado_vetor(uint16_t vector[8]) {
 
 }
 
+float valor_normalizado_vetor_LDR(uint16_t vector[8], uint8_t *luz_baixa) {
 
+    float media = 0;
+    int k;
+    for (k = 0; k < 8; k++) {
+        media += vector[k];
+    }
+
+    if(media > 20000){
+      *luz_baixa = 1;
+    }
+    else{
+      *luz_baixa = 0;
+    }
+
+    return ((media)/8000);       // 0.92 vem de uma regra de 3, o LCD estava lendo valores acima de 3,3V, então assim diminuimos o valor
+    // dividimos por 8 pois temos 8 amostras
+    // dividimos por mil pois os valores saiam na casa do milhares
+
+}
+
+void wait(uint16_t input){
+
+    volatile uint16_t dt;
+    dt = input;
+
+    TB1CTL = TBSSEL__SMCLK | MC__UP | TBCLR;
+    TB1CCR0 = dt;
+
+    while(!(TB1CCTL0 & CCIFG));
+    TB1CCTL0 &= ~CCIFG;
+
+
+}
 
 
 // função de leitura ADC single channel, single convertion
