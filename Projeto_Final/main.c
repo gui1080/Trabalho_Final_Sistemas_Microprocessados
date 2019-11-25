@@ -2,7 +2,7 @@
 
 
 /*
- * Ligações com o sensor RGB
+ * LigaÃ§Ãµes com o sensor RGB
  *
  * Sentido: MSP430 FR2355 -> RGB
  *
@@ -47,15 +47,22 @@ uint8_t luz_baixa;
 uint16_t adcFinished;
 int contador_de_leituras = 0;
 
-uint8_t tempo;
+int tempo;
+
+int conta_updates;
+
+uint8_t falso_positivo;
+
+uint8_t acionamento_proximidade;
 
 void main(void)
 {
+
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
     PM5CTL0 &= ~LOCKLPM5;
 
 
-    // envia pro ultrassom no P6.0
+    // envia pro ultrassom no P2.0
     P2DIR |= BIT0;
     P2OUT |= BIT0;
 
@@ -70,15 +77,6 @@ void main(void)
     P6DIR |= BIT6;              // habilita saida no P6.6 (LED VERDE)
     P6REN &= ~(BIT6);           // habilita resistor de pull up
     P6OUT &= ~(BIT6);           // zera saida
-
-    TB0CTL = (TBSSEL__ACLK | MC__UP |  TBCLR);   // Clock
-
-    TB0CCR0 = 0x0800;     // se 0x8000 conta 1 segundo, pegamos 1/16 disso para termos 16 amostras em 1 segundo
-                            // precisamos disso para um precisão satisfatória
-    TBCCTL0 = CCIE; // permite vermos a interrupção (local)
-
-    __enable_interrupt();           // habilitamos a interrupcao do pragma vector
-
 
     P6DIR |= BIT0;              // habilita saida no P6.0 (LED VERMELHO LED 1)
     P6REN &= ~(BIT0);           // habilita resistor de pull up
@@ -101,12 +99,11 @@ void main(void)
     // setar desliga o led
 
     // ideia: potencialmente usar 2 clocks, fazendo o do sensor de proximidade ser executado a cada 1 segundo e os outros sendo executados muito mais rapidamente
-    // um clock maior para o potenciometro deixa um baita delay chato nas mudanças de cor
+    // um clock maior para o potenciometro deixa um baita delay chato nas mudanÃ§as de cor
 
     while(1)
     {
 
-        __disable_interrupt();
 
         P2OUT |= BIT0;
         wait(20);
@@ -114,128 +111,140 @@ void main(void)
 
         while(!(P2IN & BIT2));      //espero meu pino conectado ao echo receber um sinal
 
-        TB1CTL = (TBSSEL__SMCLK | MC__CONTINOUS | TBCLR);
+        TB0CTL = (TBSSEL__SMCLK | MC__CONTINOUS | TBCLR);
 
         while(P2IN & BIT2);     // espero parar de receber um sinal
 
-        tempo = TB1R;    // batidas de clock
+        tempo = TB0R;    // batidas de clock
 
 
-        while(1);   // no lugar disso aqui eu ligaria os leds de acordo e tal
 
 
         /*
 
+        if(tempo > LIMITE){
 
-        // TESTE
-        // -------------- botar numa função--------(param: media_A0 e estado da luz)----------------------------------------------------
-        // a funcao vai receber o valor das amostras do potenciometro
-        // se o potenciometro marca que ta desligado, não amostra o sensor de proximidade, e ignora o sensor de luz
-        // executa só qnd um sensor fala que a luz esta ligada, se ta desligada executa:
+            falso_positivo = verifica_falso_positivo();
 
-        /* if(estado_da_luz == 0){
-         *     apaga os pinos e dá break
-         * }
-         *
-         *
-           /////////
+            if(falso_positivo){
+                acionamento_proximidade = 0;
+            }
 
-        if(luz_baixa == 1){
+            else{
 
-            if((posicao_potenciometro < 5) && (posicao_potenciometro > 4)){  // luz branca (LIGADO)
+                if(acionamento_proximidade == 0){
 
-              // led 1
-              P6OUT &= ~(BIT0);
-              P6OUT &= ~(BIT1);
-              P6OUT &= ~(BIT2);
+                    acionamento_proximidade = 1;
 
-              // led 2
-              P5OUT &= ~(BIT1);
-              P5OUT &= ~(BIT3);
-              P1OUT &= ~(BIT4);
+                }
+                if(acionamento_proximidade == 1){
+
+                    acionamento_proximidade = 0;
+
+                }
 
             }
 
-            if((posicao_potenciometro < 4) && (posicao_potenciometro > 3)){  // red
 
-              // led 1
-              P6OUT &= ~(BIT0);
-              P6OUT |= (BIT1);
-              P6OUT |= (BIT2);
 
-              // led 2
-              P5OUT &= ~(BIT1);
-              P5OUT |= (BIT3);
-              P1OUT |= (BIT4);
-
-            }
-
-            if((posicao_potenciometro < 3) && (posicao_potenciometro > 2)){  // green
-
-              // led 1
-              P6OUT |= (BIT0);
-              P6OUT &= ~(BIT1);
-              P6OUT |= (BIT2);
-
-              // led 2
-              P5OUT |= (BIT1);
-              P5OUT &= ~(BIT3);
-              P1OUT |= (BIT4);
-
-            }
-            if((posicao_potenciometro < 2) && (posicao_potenciometro > 1)){  // blue
-
-              // led 1
-              P6OUT |= (BIT0);
-              P6OUT |= (BIT1);
-              P6OUT &= ~(BIT2);
-
-              // led 2
-              P5OUT |= (BIT1);
-              P5OUT |= (BIT3);
-              P1OUT &= ~(BIT4);
-
-            }
-            if((posicao_potenciometro < 1) && (posicao_potenciometro > 0)){   // apagado (DESLIGADO)
-
-              // led 1
-              P6OUT |= (BIT0);
-              P6OUT |= (BIT1);
-              P6OUT |= (BIT2);
-
-              // led 2
-              P5OUT |= (BIT1);
-              P5OUT |= (BIT3);
-              P1OUT |= (BIT4);
-
-              while((posicao_potenciometro < 1) && (posicao_potenciometro > 0));
-                // ideia: para travar o programa, aqui entraria um while eterno que só acaba quando a media_A0 muda
-            }
-        // -------------- botar numa função------------------------------------------------------------
         }
 
-        else{
-            // led 1
-            P6OUT |= (BIT0);
-            P6OUT |= (BIT1);
-            P6OUT |= (BIT2);
-
-            // led 2
-            P5OUT |= (BIT1);
-            P5OUT |= (BIT3);
-            P1OUT |= (BIT4);
-        }
 
         */
-    }
 
-}
+        if(conta_updates == 100){
 
-#pragma vector = TIMER0_B0_VECTOR
-__interrupt void TB0_CCR0_ISR(){
+            conta_updates = 0;
 
+            if((luz_baixa == 1) || (acionamento_proximidade == 1)){
 
-    // leitura do potenciometro
+                if((posicao_potenciometro < 5) && (posicao_potenciometro > 4)){  // luz branca (LIGADO)
+
+                  // led 1
+                  P6OUT &= ~(BIT0);
+                  P6OUT &= ~(BIT1);
+                  P6OUT &= ~(BIT2);
+
+                  // led 2
+                  P5OUT &= ~(BIT1);
+                  P5OUT &= ~(BIT3);
+                  P1OUT &= ~(BIT4);
+
+                }
+
+                if((posicao_potenciometro < 4) && (posicao_potenciometro > 3)){  // red
+
+                  // led 1
+                  P6OUT &= ~(BIT0);
+                  P6OUT |= (BIT1);
+                  P6OUT |= (BIT2);
+
+                  // led 2
+                  P5OUT &= ~(BIT1);
+                  P5OUT |= (BIT3);
+                  P1OUT |= (BIT4);
+
+                }
+
+                if((posicao_potenciometro < 3) && (posicao_potenciometro > 2)){  // green
+
+                  // led 1
+                  P6OUT |= (BIT0);
+                  P6OUT &= ~(BIT1);
+                  P6OUT |= (BIT2);
+
+                  // led 2
+                  P5OUT |= (BIT1);
+                  P5OUT &= ~(BIT3);
+                  P1OUT |= (BIT4);
+
+                }
+                if((posicao_potenciometro < 2) && (posicao_potenciometro > 1)){  // blue
+
+                  // led 1
+                  P6OUT |= (BIT0);
+                  P6OUT |= (BIT1);
+                  P6OUT &= ~(BIT2);
+
+                  // led 2
+                  P5OUT |= (BIT1);
+                  P5OUT |= (BIT3);
+                  P1OUT &= ~(BIT4);
+
+                }
+                if((posicao_potenciometro < 1) && (posicao_potenciometro > 0)){   // apagado (DESLIGADO)
+
+                  // led 1
+                  P6OUT |= (BIT0);
+                  P6OUT |= (BIT1);
+                  P6OUT |= (BIT2);
+
+                  // led 2
+                  P5OUT |= (BIT1);
+                  P5OUT |= (BIT3);
+                  P1OUT |= (BIT4);
+
+                  //while((posicao_potenciometro < 1) && (posicao_potenciometro > 0));
+                    // ideia: para travar o programa, aqui entraria um while eterno que sÃ³ acaba quando a media_A0 muda
+                }
+            // -------------- botar numa funÃ§Ã£o------------------------------------------------------------
+            }
+
+            else{
+                // led 1
+                P6OUT |= (BIT0);
+                P6OUT |= (BIT1);
+                P6OUT |= (BIT2);
+
+                // led 2
+                P5OUT |= (BIT1);
+                P5OUT |= (BIT3);
+                P1OUT |= (BIT4);
+           }
+
+        }
+
+    // leitura do potenciometro e do ldr
     if(contador_de_leituras != 8){          // se nao chegamos, atualizamos a leitura ADC
         amostras_A0[contador_de_leituras] = adcRead(0);   // single channel, single convertion
         amostras_A1[contador_de_leituras] = adcRead(1);
@@ -249,8 +258,13 @@ __interrupt void TB0_CCR0_ISR(){
         media_A1 = valor_normalizado_vetor_LDR(amostras_A1, &luz_baixa);
     }
 
+    P6OUT ^= BIT6;
 
-    P6OUT ^= BIT6;                         // a luz pisca para termos ideia da frequencia da amostragem
-                                                    // Cada vez que a luz pisca, cada canal fez 8 leituras
+    conta_updates++;
+
+    wait(20000);
+
+    }
 
 }
+
