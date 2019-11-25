@@ -42,35 +42,6 @@ inline void trava_milissegundos(long long int milissegundos){
 
 
 
-uint8_t verifica_dist(){
-
-  volatile uint8_t tempo;
-  tempo = 0;
-
-  //__disable_interrupt();
-
-
-  P2OUT |= BIT0;
-  wait(20);
-  P2OUT &= ~BIT0;
-
-  while(!(P2IN & BIT2));      //espero meu pino conectado ao echo receber um sinal
-
-  TB1CTL = (TBSSEL__SMCLK | MC__CONTINOUS | TBCLR);
-
-  while(P2IN & BIT2);     // espero parar de receber um sinal
-
-  tempo = TB1R;    // batidas de clock
-
-
-  //while(1);   // no lugar disso aqui eu ligaria os leds de acordo e tal
-
-  //__enable_interrupt();
-
-
-  return tempo; 
-}
-
 float valor_normalizado_vetor_potenciometro(uint16_t vector[8]) {
 
     float media = 0;
