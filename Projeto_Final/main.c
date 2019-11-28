@@ -64,13 +64,13 @@ void main(void)
 
     // envia pro ultrassom no P2.0
     P2DIR |= BIT0;
-    P2OUT |= BIT0;
+    P2OUT &= ~BIT0;
 
     // entrada ultrassom
     P2DIR &= ~(BIT2);           // entrada
-    P2REN |= BIT2;              // habilitamos sua leitura
-    P2OUT |= BIT2;              // inicializamos com zero
-    P2SEL1 |= (BIT2);
+    //P2REN |= BIT2;              // habilitamos sua leitura
+    //P2OUT |= BIT2;              // inicializamos com zero
+    //P2SEL1 |= (BIT2);
 
 
 
@@ -103,10 +103,11 @@ void main(void)
 
     while(1)
     {
+        //TBOCTL = 0; 
 
 
         P2OUT |= BIT0;
-        wait(20);
+        wait(100);
         P2OUT &= ~BIT0;
 
         while(!(P2IN & BIT2));      //espero meu pino conectado ao echo receber um sinal
@@ -117,7 +118,7 @@ void main(void)
 
         tempo = TB0R;    // batidas de clock
 
-
+        TB0CTL = 0;
 
 
         /*
