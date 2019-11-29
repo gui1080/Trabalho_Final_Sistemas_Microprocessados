@@ -97,31 +97,3 @@ uint16_t adcRead(uint8_t pin)
     while(!(ADCIFG & ADCIFG0));                 // esperamos o final da conversÃ£o
     return ADCMEM0;                             // retornamos o espaÃ§o de memÃ³ria com o resultado
 }
-
-uint8_t verifica_falso_positivo(){
-
-    volatile uint8_t teste;
-
-    P6OUT |= BIT6;
-
-    trava_milissegundos(1500);
-
-    P6OUT &= ~BIT6;
-
-    trava_milissegundos(500);
-
-    teste = verifica_dist();
-
-    if(teste > LIMITE){
-
-        return 0;
-
-    }
-
-    else{
-
-        return 1;
-
-    }
-
-}
