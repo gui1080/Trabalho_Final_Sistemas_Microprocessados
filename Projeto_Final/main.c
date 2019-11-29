@@ -1,32 +1,31 @@
 #include <msp430.h> 
 
-/*
- * Ligações com o sensor RGB
+/*  LIGAÇÕES
  *
- * Sentido: MSP430 FR2355 -> RGB
+ *  - LEDS RGB
  *
- * 5 volts -> 330ohms -> perna maior
- * P6.2 -> 330ohms -> BLUE (direita de GREEN)
- * P6.1 -> 330ohms -> GREEN (direita de 5V)
- * P6.0 -> 330ohms -> RED (esquerda de 5V)
+ *  5 volts -> 330ohms -> perna maior
+ *  P6.2 -> 330ohms -> BLUE (direita de GREEN)
+ *  P6.1 -> 330ohms -> GREEN (direita de 5V)
+ *  P6.0 -> 330ohms -> RED (esquerda de 5V)
  *
- * P1.4 -> 330ohms -> BLUE
- * P5.3 -> 330ohms -> GREEN
- * P5.1 -> 330ohms -> RED
+ *  P1.4 -> 330ohms -> BLUE
+ *  P5.3 -> 330ohms -> GREEN
+ *  P5.1 -> 330ohms -> RED
  *
  *
- * -Potenciometro (de frente)
+ *  -Potenciometro (de frente)
  *
- * esquerda -> GND
- * meio -> P1.0
- * direita -> 3.3v
+ *  esquerda -> GND
+ *  meio -> P1.0
+ *  direita -> 3.3v
  *
- * -LDR (5mm)
+ *  -LDR (5mm)
  *
- * GND -> perna direita
- * 3.3V -> 10k ohm -> perna esquerda -> output em P1.1
+ *  GND -> perna direita
+ *  3.3V -> 10k ohm -> perna esquerda -> output em P1.1
  *
- * HC-SR04
+ *  HC-SR04
  *
  *  VCC -> 5V
  *  GND -> GND
@@ -40,29 +39,33 @@
 #include <string.h>
 #include "../source/funcoes_auxiliares.c"
 
+// LIMITES
 #define LED_REFRESH_RATE 100
 #define LIMITE_PARA_ESPACO 500
+// o espaço de atuação do sensor realmente dá +/- 5 centímetros
 
-
+// POTENCIOMETRO
 uint16_t amostras_A0[8];
 float volatile posicao_potenciometro;
 
+// SENSOR DE LUZ
 uint16_t amostras_A1[8];
 float volatile media_A1;
-uint8_t luz_baixa;
 
-uint16_t adcFinished;
+// CONTADOR DE LEITURAS
 int contador_de_leituras = 0;
 
+// DISTANCIA DO SENSOR
 int tempo;
-int tempo_2;
+int tempo_leitura_secundaria;
 int tempo_teste;
 
+// UPDATE DO LED
 int conta_updates;
 
-uint8_t falso_positivo;
-
+// FLAGS QUE DITAM SE A LUZ ESTÁ LIGADA OU NÃO
 uint8_t acionamento_proximidade;
+uint8_t luz_baixa;
 
 void main(void)
 {
@@ -71,17 +74,14 @@ void main(void)
     PM5CTL0 &= ~LOCKLPM5;
 
 
-    // envia pro ultrassom no P2.0
+    // envia pro ultrassom
     P2DIR |= BIT0;
     P2OUT &= ~BIT0;
-
     // entrada ultrassom
     P2DIR &= ~(BIT2);           // entrada
-    //P2REN |= BIT2;              // habilitamos sua leitura
-    //P2OUT |= BIT2;              // inicializamos com zero
-    //P2SEL1 |= (BIT2);
 
 
+    // LEDS
 
     P6DIR |= BIT6;              // habilita saida no P6.6 (LED VERDE)
     P6REN &= ~(BIT6);           // habilita resistor de pull up
@@ -104,8 +104,7 @@ void main(void)
 
     P1DIR |= BIT4;              // habilita saida no P (LED AZUL LED 2)
     P1REN &= ~(BIT4);           // habilita resistor de pull up
-    // escrever zero liga o led
-    // setar desliga o led
+
 
     while(1)
     {
@@ -159,11 +158,11 @@ void main(void)
 
                 TB0CTL = 0;
 
-                tempo_2 = TB0R;    // batidas de clock
+                tempo_leitura_secundaria = TB0R;    // batidas de clock
 
                 //while(1);
 
-                if(tempo_2 > LIMITE_PARA_ESPACO){
+                if(tempo_leitura_secundaria > LIMITE_PARA_ESPACO){
 
                     // queremos mudar o estado da luz
                     if(acionamento_proximidade == 1){
@@ -210,7 +209,7 @@ void main(void)
 
                     }
 
-                    trava_milissegundos(1000);
+                    trava_milissegundos(1000);       // folga para o programa retornar para sua rotina normal
                 }
 
                 //------------------------------------------------------------------------------------------
@@ -221,9 +220,10 @@ void main(void)
 
         }
 
+        // update de LEDs
+        //--------------------------------------------------------------------------------------------------------
 
-
-        if(conta_updates == LED_REFRESH_RATE){
+        if(conta_updates == LED_REFRESH_RATE){      // nem todo ciclo do while na main atualiza o led. O delay é proposital.
 
             conta_updates = 0;
 
@@ -295,10 +295,7 @@ void main(void)
                   P5OUT |= (BIT3);
                   P1OUT |= (BIT4);
 
-                  //while((posicao_potenciometro < 1) && (posicao_potenciometro > 0));
-                    // ideia: para travar o programa, aqui entraria um while eterno que só acaba quando a media_A0 muda
                 }
-            // -------------- botar numa função------------------------------------------------------------
             }
 
             else{
@@ -315,6 +312,9 @@ void main(void)
 
         }
 
+    // update de LEDs
+    //--------------------------------------------------------------------------------------------------------
+
     // leitura do potenciometro e do ldr
     if(contador_de_leituras != 8){          // se nao chegamos, atualizamos a leitura ADC
         amostras_A0[contador_de_leituras] = adcRead(0);   // single channel, single convertion
@@ -324,12 +324,9 @@ void main(void)
 
     if (contador_de_leituras == 8) {        // se chegamos ao final das leituras, resetamos
         contador_de_leituras = 0;
-        adcFinished = 1;
         posicao_potenciometro = valor_normalizado_vetor_potenciometro(amostras_A0);
         media_A1 = valor_normalizado_vetor_LDR(amostras_A1, &luz_baixa);
     }
-
-    P6OUT ^= BIT6;
 
     conta_updates++;
 
