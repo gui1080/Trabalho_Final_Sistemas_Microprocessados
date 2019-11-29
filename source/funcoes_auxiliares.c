@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define LIMITE 10
+#define LIMITE_DE_LUZ 22000
 
 void wait(uint16_t input){
 
@@ -63,14 +64,14 @@ float valor_normalizado_vetor_LDR(uint16_t vector[8], uint8_t *luz_baixa) {
         media += vector[k];
     }
 
-    if(media > 7400){
+    if(media > LIMITE_DE_LUZ){
       *luz_baixa = 1;
     }
     else{
       *luz_baixa = 0;
     }
 
-    return ((media));       // 0.92 vem de uma regra de 3, o LCD estava lendo valores acima de 3,3V, entÃ£o assim diminuimos o valor
+    return (media);       // 0.92 vem de uma regra de 3, o LCD estava lendo valores acima de 3,3V, entÃ£o assim diminuimos o valor
     // dividimos por 8 pois temos 8 amostras
     // dividimos por mil pois os valores saiam na casa do milhares
 
