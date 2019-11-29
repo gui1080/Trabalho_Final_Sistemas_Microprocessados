@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdint.h>
 
-#define LIMITE 10
-#define LIMITE_DE_LUZ 22000
+// LUZ BAIXA
+#define LIMITE_DE_LUZ 21000
 
 void wait(uint16_t input){
 
@@ -77,12 +77,12 @@ float valor_normalizado_vetor_LDR(uint16_t vector[8], uint8_t *luz_baixa) {
 
 }
 
-// funÃ§Ã£o de leitura ADC single channel, single convertion
+// função de leitura ADC single channel, single convertion
 uint16_t adcRead(uint8_t pin)
 {
     ADCCTL0 = ADCSHT_6 | ADCON;                   // ligando ADC para podermos atualizar os proximos vetores
-    ADCCTL1 = ADCSHS_0 | ADCCONSEQ_0 | ADCSHP;    // 1 canal, 1 conversÃ£o
-    ADCCTL2 = ADCRES_2;                           // resoluÃ§Ã£o do sinal de saÃ­da vai ser 12 bits
+    ADCCTL1 = ADCSHS_0 | ADCCONSEQ_0 | ADCSHP;    // 1 canal, 1 conversão
+    ADCCTL2 = ADCRES_2;                           // resolução do sinal de saÃ­da vai ser 12 bits
 
     ADCMCTL0 = pin;                      // Seleciona o canal
 
@@ -94,6 +94,6 @@ uint16_t adcRead(uint8_t pin)
     ADCCTL0 &= ~ADCSC;                          // Gera flanco de subida
     ADCCTL0 |= ADCSC;
 
-    while(!(ADCIFG & ADCIFG0));                 // esperamos o final da conversÃ£o
-    return ADCMEM0;                             // retornamos o espaÃ§o de memÃ³ria com o resultado
+    while(!(ADCIFG & ADCIFG0));                 // esperamos o final da conversão
+    return ADCMEM0;                             // retornamos o espaço de memória com o resultado
 }
