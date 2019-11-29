@@ -1,6 +1,5 @@
 #include <msp430.h> 
 
-
 /*
  * Ligações com o sensor RGB
  *
@@ -25,17 +24,25 @@
  * -LDR (5mm)
  *
  * GND -> perna direita
- * 5V -> 10k ohm -> perna esquerda -> output em P1.1
+ * 3.3V -> 10k ohm -> perna esquerda -> output em P1.1
  *
  * HC-SR04
+ *
+ *  VCC -> 5V
+ *  GND -> GND
+ *  TRIGGER -> P2.0
+ *  ECHO -> P2.2
  *
  */
 
 
 #include <stdio.h>
 #include <string.h>
-
 #include "../source/funcoes_auxiliares.c"
+
+#define LED_REFRESH_RATE 100
+#define LIMITE_PARA_ESPACO 500
+
 
 uint16_t amostras_A0[8];
 float volatile posicao_potenciometro;
@@ -48,6 +55,8 @@ uint16_t adcFinished;
 int contador_de_leituras = 0;
 
 int tempo;
+int tempo_2;
+int tempo_teste;
 
 int conta_updates;
 
@@ -98,62 +107,123 @@ void main(void)
     // escrever zero liga o led
     // setar desliga o led
 
-    // ideia: potencialmente usar 2 clocks, fazendo o do sensor de proximidade ser executado a cada 1 segundo e os outros sendo executados muito mais rapidamente
-    // um clock maior para o potenciometro deixa um baita delay chato nas mudanças de cor
-
     while(1)
     {
-        //TBOCTL = 0; 
 
+        if(luz_baixa == 0){
 
-        P2OUT |= BIT0;
-        wait(100);
-        P2OUT &= ~BIT0;
+            // lógica para pegar a distância no sensor 1 vez
+            //------------------------------------------------------------------------------------------
+            P2OUT |= BIT0;
+            wait(100);
+            P2OUT &= ~BIT0;
 
-        while(!(P2IN & BIT2));      //espero meu pino conectado ao echo receber um sinal
+            while(!(P2IN & BIT2));      //espero meu pino conectado ao echo receber um sinal
 
-        TB0CTL = (TBSSEL__SMCLK | MC__CONTINOUS | TBCLR);
+            TB0CTL = (TBSSEL__SMCLK | MC__CONTINOUS | TBCLR);
 
-        while(P2IN & BIT2);     // espero parar de receber um sinal
+            while(P2IN & BIT2);     // espero parar de receber um sinal
 
-        tempo = TB0R;    // batidas de clock
+            TB0CTL = 0;
 
-        TB0CTL = 0;
+            tempo = TB0R;    // batidas de clock
+            //------------------------------------------------------------------------------------------
 
+            if(tempo < LIMITE_PARA_ESPACO){
 
-        /*
+                trava_milissegundos(1000);
 
-        if(tempo > LIMITE){
+                P6OUT ^= (BIT0);
+                P6OUT ^= (BIT1);
+                P6OUT ^= (BIT2);
 
-            falso_positivo = verifica_falso_positivo();
+                trava_milissegundos(1000);
+                trava_milissegundos(1000);
+                trava_milissegundos(1000);
 
-            if(falso_positivo){
-                acionamento_proximidade = 0;
-            }
+                P6OUT ^= (BIT0);
+                P6OUT ^= (BIT1);
+                P6OUT ^= (BIT2);
 
-            else{
+                // lógica para pegar a distância no sensor 1 vez
+                //------------------------------------------------------------------------------------------
+                P2OUT |= BIT0;
+                wait(100);
+                P2OUT &= ~BIT0;
 
-                if(acionamento_proximidade == 0){
+                while(!(P2IN & BIT2));      //espero meu pino conectado ao echo receber um sinal
 
-                    acionamento_proximidade = 1;
+                TB0CTL = (TBSSEL__SMCLK | MC__CONTINOUS | TBCLR);
+
+                while(P2IN & BIT2);     // espero parar de receber um sinal
+
+                TB0CTL = 0;
+
+                tempo_2 = TB0R;    // batidas de clock
+
+                //while(1);
+
+                if(tempo_2 > LIMITE_PARA_ESPACO){
+
+                    // queremos mudar o estado da luz
+                    if(acionamento_proximidade == 1){
+                        acionamento_proximidade = 0;
+                    }
+                    else{
+                        acionamento_proximidade = 1;
+                    }
 
                 }
-                if(acionamento_proximidade == 1){
+                else{
 
-                    acionamento_proximidade = 0;
+                    //falso positivo
+                    tempo_teste = 0;
+                    while(tempo_teste < LIMITE_PARA_ESPACO){
 
+                        P6OUT ^= (BIT0);
+                        P6OUT ^= (BIT1);
+                        P6OUT ^= (BIT2);
+
+                        // lógica para pegar a distância no sensor 1 vez
+                        //------------------------------------------------------------------------------------------
+                        P2OUT |= BIT0;
+                        wait(100);
+                        P2OUT &= ~BIT0;
+
+                        while(!(P2IN & BIT2));      //espero meu pino conectado ao echo receber um sinal
+
+                        TB0CTL = (TBSSEL__SMCLK | MC__CONTINOUS | TBCLR);
+
+                        while(P2IN & BIT2);     // espero parar de receber um sinal
+
+                        TB0CTL = 0;
+
+                        tempo_teste = TB0R;    // batidas de clock
+                        //------------------------------------------------------------------------------------------
+
+                        P6OUT ^= (BIT0);
+                        P6OUT ^= (BIT1);
+                        P6OUT ^= (BIT2);
+
+                        trava_milissegundos(500);
+
+
+                    }
+
+                    trava_milissegundos(1000);
                 }
 
-            }
+                //------------------------------------------------------------------------------------------
 
+
+            }
 
 
         }
 
 
-        */
 
-        if(conta_updates == 100){
+        if(conta_updates == LED_REFRESH_RATE){
 
             conta_updates = 0;
 
