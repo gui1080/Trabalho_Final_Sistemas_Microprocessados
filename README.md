@@ -1,8 +1,8 @@
 # Abajur Inteligente
 
-Feito no Code Composer Studio com a MSP430 FR2355. 
+Feito no Code Composer Studio v8 com a MSP430 FR2355. 
 
-# Alunos:
+# Informações
 
 Gabriel Matheus - 17/0103498
 
