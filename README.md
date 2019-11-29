@@ -6,7 +6,11 @@ Feito no Code Composer Studio v8 com a MSP430 FR2355.
 
 Gabriel Matheus - 17/0103498
 
+https://github.com/Shudugen
+
 Guilherme Braga - 17/0162290
+
+https://github.com/therealguib545
 
 Professor: Daniel Café
 
