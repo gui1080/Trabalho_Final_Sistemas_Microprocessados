@@ -1,5 +1,17 @@
 #include <msp430.h> 
 
+/*
+
+TRABALHO FINAL DE LABSISMIC
+
+Gabriel Matheus - 17/0103498
+
+Guilherme Braga - 17/0162290
+
+*/
+
+
+
 /*  LIGAÇÕES
  *
  *  - LEDS RGB
